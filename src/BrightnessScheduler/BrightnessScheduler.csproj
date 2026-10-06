@@ -1,0 +1,37 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net10.0-windows</TargetFramework>
+    <UseWPF>true</UseWPF>
+    <UseWindowsForms>true</UseWindowsForms>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>disable</ImplicitUsings>
+    <LangVersion>latest</LangVersion>
+    <AssemblyName>BrightnessScheduler</AssemblyName>
+    <RootNamespace>BrightnessScheduler</RootNamespace>
+    <ApplicationIcon>Assets\app.ico</ApplicationIcon>
+    <ApplicationManifest>app.manifest</ApplicationManifest>
+    <Version>1.1.0</Version>
+    <Product>Brightness Scheduler</Product>
+    <Description>Schedule laptop and external monitor (DDC/CI) brightness and contrast.</Description>
+    <Copyright>Copyright (c) 2026 DevCol</Copyright>
+    <Company>DevCol</Company>
+    <Authors>DevCol</Authors>
+    <!-- WPF Fluent theme (ThemeMode) is still marked experimental -->
+    <NoWarn>$(NoWarn);WPF0001;WFO0003</NoWarn>
+    <SatelliteResourceLanguages>en;ko</SatelliteResourceLanguages>
+    <!-- Keep ProductVersion clean ("1.1.0", no "+commit") so signing metadata checks match -->
+    <IncludeSourceRevisionInInformationalVersion>false</IncludeSourceRevisionInInformationalVersion>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Resource Include="Assets\*.ico" />
+    <Resource Include="Assets\*.png" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="System.Management" Version="10.0.12" />
+  </ItemGroup>
+
+</Project>
