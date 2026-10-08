@@ -69,9 +69,22 @@ jobs:
           name: BrightnessScheduler
           path: release/*
 
+      - name: Extract release notes from CHANGELOG
+        if: startsWith(github.ref, 'refs/tags/v')
+        shell: pwsh
+        run: |
+          $ver = '${{ github.ref_name }}'.TrimStart('v')
+          $lines = Get-Content CHANGELOG.md -Encoding UTF8
+          $start = [array]::IndexOf($lines, ($lines | Where-Object { $_ -match "^## \[$([regex]::Escape($ver))\]" } | Select-Object -First 1))
+          if ($start -lt 0) { "See [CHANGELOG.md](CHANGELOG.md)." | Set-Content release-notes.md -Encoding UTF8; exit 0 }
+          $end = $lines.Count
+          for ($i = $start + 1; $i -lt $lines.Count; $i++) { if ($lines[$i] -match '^## \[' -or $lines[$i] -match '^\[.+\]: ') { $end = $i; break } }
+          $lines[($start + 1)..($end - 1)] | Set-Content release-notes.md -Encoding UTF8
+
       - name: Publish GitHub release
         if: startsWith(github.ref, 'refs/tags/v')
         uses: softprops/action-gh-release@v3
         with:
           files: release/*
+          body_path: release-notes.md
           generate_release_notes: true
