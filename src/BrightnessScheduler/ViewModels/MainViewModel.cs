@@ -75,13 +75,6 @@ public sealed class MainViewModel : ObservableObject
         BackToScheduleCommand = new RelayCommand(() => _scheduler.ClearOverride());
         DisableWindowsNightLightScheduleCommand = new RelayCommand(() => RunNightLight(NightLightService.DisableWindowsSchedule));
         RefreshNightLightCommand = new RelayCommand(() => RunNightLight(NightLightService.Refresh));
-        _nightLightDebounce = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(250) };
-        _nightLightDebounce.Tick += (_, _) =>
-        {
-            _nightLightDebounce.Stop();
-            int s = _nightLightStrength;
-            RunNightLight(() => NightLightService.Set(null, s));
-        };
         AddEntryCommand = new RelayCommand(AddEntry);
         RefreshDisplaysCommand = new RelayCommand(async () => await DetectDisplaysAsync(), () => !IsDetecting);
         OpenDataFolderCommand = new RelayCommand(() => OpenShell(SettingsService.DataFolder));
@@ -213,7 +206,8 @@ public sealed class MainViewModel : ObservableObject
     }
 
     // ---------------- Night Light ----------------
-    private readonly DispatcherTimer _nightLightDebounce;
+    /// <summary>Slider moved but not committed yet (committed when the mouse / key is released).</summary>
+    private bool _nightLightStrengthDirty;
     private bool _nightLightSupported, _nightLightEnabled, _nightLightWinSchedule;
     private int _nightLightStrength = 50;
 
@@ -252,18 +246,35 @@ public sealed class MainViewModel : ObservableObject
         get => _nightLightStrength;
         set
         {
-            if (!Set(ref _nightLightStrength, value)) return;
-            _nightLightDebounce.Stop();
-            _nightLightDebounce.Start();
+            if (Set(ref _nightLightStrength, value)) _nightLightStrengthDirty = true;
         }
+    }
+
+    /// <summary>
+    /// Applies the strength once the user lets go of the slider. Opening Settings for every
+    /// intermediate value would flash the window constantly.
+    /// </summary>
+    public void CommitNightLightStrength()
+    {
+        if (!_nightLightStrengthDirty) return;
+        _nightLightStrengthDirty = false;
+        int s = _nightLightStrength;
+        if (NightLightService.Get() is { Known: true } st && st.Strength == s) return;
+        RunNightLight(() => NightLightService.Set(null, s));
     }
 
     /// <summary>Re-reads Night Light from Windows (it can also be changed in Settings / Action Center).</summary>
     public void RefreshNightLight()
     {
-        if (_nightLightDebounce.IsEnabled) return; // user is dragging the slider
+        if (_nightLightStrengthDirty) return; // user is still adjusting the slider
         var st = NightLightService.Get();
         NightLightKnown = st.Known;
+        if (st.Known && (_settings.LastNightLightOn != st.Enabled || _settings.LastNightLightStrength != st.Strength))
+        {
+            _settings.LastNightLightOn = st.Enabled;
+            _settings.LastNightLightStrength = st.Strength;
+            MarkDirty();
+        }
         NightLightWindowsScheduleOn = st.WindowsScheduleOn;
         if (_nightLightEnabled != st.Enabled) { _nightLightEnabled = st.Enabled; OnPropertyChanged(nameof(NightLightEnabled)); }
         if (_nightLightStrength != st.Strength) { _nightLightStrength = st.Strength; OnPropertyChanged(nameof(NightLightStrength)); }

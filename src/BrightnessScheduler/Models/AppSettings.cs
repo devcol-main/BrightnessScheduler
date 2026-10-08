@@ -23,6 +23,9 @@ public sealed class AppSettings
     public int EnforceIntervalMinutes { get; set; } = 0;
     public bool ShowNotifications { get; set; } = true;
     public List<ScheduleEntry> Entries { get; set; } = new();
+    /// <summary>Last Night Light state read from / applied to Windows (shown until it is checked again).</summary>
+    public bool LastNightLightOn { get; set; }
+    public int LastNightLightStrength { get; set; } = 50;
 }
 
 public sealed class ScheduleEntry

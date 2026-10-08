@@ -40,6 +40,9 @@ public static class NightLightService
 
     public static NightLightState Get() => _last with { WindowsScheduleOn = ReadWindowsScheduleFlag() };
 
+    /// <summary>Seeds the cache with the last saved state (still marked as not checked).</summary>
+    public static void Seed(bool enabled, int strength) => _last = _last with { Enabled = enabled, Strength = Math.Clamp(strength, 0, 100) };
+
     /// <summary>Reads the real state by briefly opening Settings.</summary>
     public static NightLightState Refresh() => Apply(null, null, false);
 

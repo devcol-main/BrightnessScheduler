@@ -28,6 +28,14 @@ public partial class MainWindow : Window
         EnforceCombo.SelectedIndex = index < 0 ? 0 : index;
     }
 
+    /// <summary>Night Light strength is applied only when the slider is released (mouse up / key up).</summary>
+    private void NightLightSlider_Release(object sender, RoutedEventArgs e)
+    {
+        // Let the slider finish updating its value first.
+        Dispatcher.BeginInvoke(() => (DataContext as MainViewModel)?.CommitNightLightStrength(),
+            System.Windows.Threading.DispatcherPriority.Background);
+    }
+
     private void PauseButton_Click(object sender, RoutedEventArgs e)
     {
         PauseMenu.DataContext = DataContext;

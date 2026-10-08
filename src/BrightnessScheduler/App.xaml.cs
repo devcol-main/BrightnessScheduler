@@ -66,6 +66,7 @@ public partial class App : Application
         ApplyTheme(_settings.Theme);
         StartupService.Apply(_settings.RunAtStartup);
 
+        NightLightService.Seed(_settings.LastNightLightOn, _settings.LastNightLightStrength);
         _scheduler = new SchedulerService(_settings, Dispatcher);
         _vm = new MainViewModel(_settings, _scheduler);
         _tray = new TrayIcon(_scheduler, _vm, ShowMainWindow, ExitApp);
