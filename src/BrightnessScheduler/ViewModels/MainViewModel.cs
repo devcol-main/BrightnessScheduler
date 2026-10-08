@@ -42,6 +42,8 @@ public sealed class MainViewModel : ObservableObject
     public ICommand ResumeCommand { get; }
     public ICommand SwitchModeCommand { get; }
     public ICommand BackToScheduleCommand { get; }
+    public ICommand DisableWindowsNightLightScheduleCommand { get; }
+    public ICommand RefreshNightLightCommand { get; }
     public ICommand AddEntryCommand { get; }
     public ICommand RefreshDisplaysCommand { get; }
     public ICommand OpenDataFolderCommand { get; }
@@ -71,6 +73,15 @@ public sealed class MainViewModel : ObservableObject
         ResumeCommand = new RelayCommand(() => _scheduler.Resume());
         SwitchModeCommand = new RelayCommand(p => { if (p is EntryViewModel vm) _scheduler.SetOverride(vm.Model); });
         BackToScheduleCommand = new RelayCommand(() => _scheduler.ClearOverride());
+        DisableWindowsNightLightScheduleCommand = new RelayCommand(() => RunNightLight(NightLightService.DisableWindowsSchedule));
+        RefreshNightLightCommand = new RelayCommand(() => RunNightLight(NightLightService.Refresh));
+        _nightLightDebounce = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(250) };
+        _nightLightDebounce.Tick += (_, _) =>
+        {
+            _nightLightDebounce.Stop();
+            int s = _nightLightStrength;
+            RunNightLight(() => NightLightService.Set(null, s));
+        };
         AddEntryCommand = new RelayCommand(AddEntry);
         RefreshDisplaysCommand = new RelayCommand(async () => await DetectDisplaysAsync(), () => !IsDetecting);
         OpenDataFolderCommand = new RelayCommand(() => OpenShell(SettingsService.DataFolder));
@@ -196,8 +207,66 @@ public sealed class MainViewModel : ObservableObject
 
     private void OnApplied(Dictionary<string, (int B, int C)> values)
     {
+        RefreshNightLight();
         foreach (var d in Displays)
             if (values.TryGetValue(d.Id, out var v)) d.UpdateFromApplied(v.B, v.C);
+    }
+
+    // ---------------- Night Light ----------------
+    private readonly DispatcherTimer _nightLightDebounce;
+    private bool _nightLightSupported, _nightLightEnabled, _nightLightWinSchedule;
+    private int _nightLightStrength = 50;
+
+    /// <summary>False until the real state has been read from Windows (shows "last applied" hint).</summary>
+    public bool NightLightKnown { get => _nightLightSupported; private set => Set(ref _nightLightSupported, value); }
+    public bool NightLightSupported => true;
+    public bool NightLightBusy { get => _nightLightBusy; private set => Set(ref _nightLightBusy, value); }
+    private bool _nightLightBusy;
+
+    /// <summary>Night Light is changed through the Settings app (~1 s), so run it off the UI thread.</summary>
+    private void RunNightLight(Func<NightLightState> action)
+    {
+        NightLightBusy = true;
+        Task.Run(action).ContinueWith(_ => System.Windows.Application.Current.Dispatcher.BeginInvoke(() =>
+        {
+            NightLightBusy = false;
+            RefreshNightLight();
+        }));
+    }
+    public bool NightLightWindowsScheduleOn { get => _nightLightWinSchedule; private set => Set(ref _nightLightWinSchedule, value); }
+
+    /// <summary>Live toggle (dashboard / tray).</summary>
+    public bool NightLightEnabled
+    {
+        get => _nightLightEnabled;
+        set
+        {
+            if (!Set(ref _nightLightEnabled, value)) return;
+            int s = _nightLightStrength;
+            RunNightLight(() => NightLightService.Set(value, value ? s : null));
+        }
+    }
+
+    public int NightLightStrength
+    {
+        get => _nightLightStrength;
+        set
+        {
+            if (!Set(ref _nightLightStrength, value)) return;
+            _nightLightDebounce.Stop();
+            _nightLightDebounce.Start();
+        }
+    }
+
+    /// <summary>Re-reads Night Light from Windows (it can also be changed in Settings / Action Center).</summary>
+    public void RefreshNightLight()
+    {
+        if (_nightLightDebounce.IsEnabled) return; // user is dragging the slider
+        var st = NightLightService.Get();
+        NightLightKnown = st.Known;
+        NightLightWindowsScheduleOn = st.WindowsScheduleOn;
+        if (_nightLightEnabled != st.Enabled) { _nightLightEnabled = st.Enabled; OnPropertyChanged(nameof(NightLightEnabled)); }
+        if (_nightLightStrength != st.Strength) { _nightLightStrength = st.Strength; OnPropertyChanged(nameof(NightLightStrength)); }
     }
 
     // ---------------- schedule ----------------
@@ -207,6 +276,7 @@ public sealed class MainViewModel : ObservableObject
     {
         var now = DateTime.Now;
         var e = new ScheduleEntry { Name = Loc.T("NewEntry"), Time = $"{now.Hour:00}:00" };
+        e.NightLight.Strength = NightLightStrength;
         foreach (var d in Displays)
             e.Targets.Add(new MonitorTarget { MonitorId = d.Id, MonitorName = d.Name, SetBrightness = d.SupportsBrightness, Brightness = Math.Max(d.Brightness, 0), Contrast = Math.Max(d.Contrast, 0) });
         _settings.Entries.Add(e);
@@ -317,6 +387,7 @@ public sealed class MainViewModel : ObservableObject
         OnPropertyChanged(nameof(NextText));
         OnPropertyChanged(nameof(ActiveLevel));
         OnPropertyChanged(nameof(StatusGlyph));
+        RefreshNightLight();
         RefreshTimeline();
     }
 

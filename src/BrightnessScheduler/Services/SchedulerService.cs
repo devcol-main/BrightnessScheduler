@@ -73,7 +73,8 @@ public sealed class SchedulerService : IDisposable
     }
 
     /// <summary>Re-evaluates the schedule; applies if the active entry changed.</summary>
-    public void Evaluate(bool force = false)
+    /// <param name="user">User-initiated: always re-apply Night Light even if it looks unchanged.</param>
+    public void Evaluate(bool force = false, bool user = false)
     {
         var now = DateTime.Now;
         if (PausedUntil.HasValue && PausedUntil.Value <= now)
@@ -102,9 +103,10 @@ public sealed class SchedulerService : IDisposable
                 bool enforceO = _settings.EnforceIntervalMinutes > 0 && now - _lastApply >= TimeSpan.FromMinutes(_settings.EnforceIntervalMinutes);
                 if (okey != _lastKey || force || enforceO)
                 {
+                    bool nlForce = okey != _lastKey || user;
                     _lastKey = okey;
                     Logger.Info($"Applying override '{OverrideEntry.Name}'");
-                    Apply(OverrideEntry, 0);
+                    Apply(OverrideEntry, 0, nlForce);
                 }
             }
             StateChanged?.Invoke(this, EventArgs.Empty);
@@ -124,17 +126,17 @@ public sealed class SchedulerService : IDisposable
                 if (changed && _lastKey != null && !force) EntryStarted?.Invoke(active);
                 _lastKey = key;
                 Logger.Info($"Applying '{active.Name}' (changed={changed}, force={force}, enforce={enforce}, fade={transition}s)");
-                Apply(active, transition);
+                Apply(active, transition, changed || user);
             }
         }
         StateChanged?.Invoke(this, EventArgs.Empty);
     }
 
     /// <summary>Re-applies the active entry immediately.</summary>
-    public void ApplyNow() => Evaluate(force: true);
+    public void ApplyNow() => Evaluate(force: true, user: true);
 
     /// <summary>Applies an arbitrary entry right away (preview from the editor).</summary>
-    public void Preview(ScheduleEntry entry) => Apply(entry, 0);
+    public void Preview(ScheduleEntry entry) => Apply(entry, 0, true);
 
     /// <summary>
     /// Switch to another mode right now. It stays until the next scheduled change,
@@ -152,7 +154,7 @@ public sealed class SchedulerService : IDisposable
         _overrideSince = DateTime.Now;
         OverrideUntil = NextEntry != null ? NextAt : DateTime.MaxValue;
         Logger.Info($"Override '{entry.Name}' until {OverrideUntil}");
-        Evaluate(force: true);
+        Evaluate(force: true, user: true);
     }
 
     public void ClearOverride()
@@ -160,7 +162,7 @@ public sealed class SchedulerService : IDisposable
         if (OverrideEntry != null) Logger.Info("Override cleared");
         OverrideEntry = null;
         _lastKey = null;
-        Evaluate(force: true);
+        Evaluate(force: true, user: true);
     }
 
     public void Pause(TimeSpan? duration)
@@ -185,7 +187,7 @@ public sealed class SchedulerService : IDisposable
         PausedUntil = null;
         _lastKey = null;
         Logger.Info("Resumed");
-        Evaluate(force: true);
+        Evaluate(force: true, user: true);
     }
 
     public void CancelTransition()
@@ -193,7 +195,7 @@ public sealed class SchedulerService : IDisposable
         _cts?.Cancel();
     }
 
-    private void Apply(ScheduleEntry entry, int transitionSeconds)
+    private void Apply(ScheduleEntry entry, int transitionSeconds, bool forceNightLight)
     {
         _cts?.Cancel();
         var cts = new CancellationTokenSource();
@@ -206,13 +208,17 @@ public sealed class SchedulerService : IDisposable
             MonitorId = t.MonitorId, SetBrightness = t.SetBrightness, Brightness = t.Brightness,
             SetContrast = t.SetContrast, Contrast = t.Contrast,
         }).ToList();
-        var snapshot = new ScheduleEntry { Id = entry.Id, Name = entry.Name, Targets = targets };
+        var snapshot = new ScheduleEntry
+        {
+            Id = entry.Id, Name = entry.Name, Targets = targets,
+            NightLight = new NightLightTarget { Set = entry.NightLight.Set, Enabled = entry.NightLight.Enabled, Strength = entry.NightLight.Strength },
+        };
 
         Task.Run(() =>
         {
             try
             {
-                var applied = ApplyCore(snapshot, transitionSeconds, cts.Token);
+                var applied = ApplyCore(snapshot, transitionSeconds, forceNightLight, cts.Token);
                 _dispatcher.BeginInvoke(() => Applied?.Invoke(applied));
             }
             catch (Exception ex)
@@ -222,7 +228,7 @@ public sealed class SchedulerService : IDisposable
         });
     }
 
-    private static Dictionary<string, (int B, int C)> ApplyCore(ScheduleEntry entry, int transitionSeconds, CancellationToken ct)
+    private static Dictionary<string, (int B, int C)> ApplyCore(ScheduleEntry entry, int transitionSeconds, bool forceNightLight, CancellationToken ct)
     {
         var applied = new Dictionary<string, (int B, int C)>();
         lock (MonitorService.HardwareLock)
@@ -272,6 +278,16 @@ public sealed class SchedulerService : IDisposable
                     if (k < steps && ct.WaitHandle.WaitOne(interval)) break;
                 }
             }
+        }
+
+        if (entry.NightLight.Set && !ct.IsCancellationRequested)
+        {
+            var nl = entry.NightLight;
+            var last = NightLightService.Get();
+            bool upToDate = last.Known && last.Enabled == nl.Enabled && (!nl.Enabled || last.Strength == nl.Strength);
+            // Opening Settings flashes a window, so skip it on wake/unlock re-applies when nothing changed.
+            if (forceNightLight || !upToDate)
+                NightLightService.Set(nl.Enabled, nl.Enabled ? nl.Strength : null);
         }
         return applied;
     }

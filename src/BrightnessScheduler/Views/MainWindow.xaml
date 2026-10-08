@@ -280,6 +280,70 @@
                                 </DataTemplate>
                             </ItemsControl.ItemTemplate>
                         </ItemsControl>
+
+                        <!-- Night Light -->
+                        <Border Style="{StaticResource Card}" Margin="0,0,12,12" Padding="20,16,20,12">
+                            <StackPanel>
+                                <Grid Margin="0,0,0,8">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="Auto" />
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="Auto" />
+                                    </Grid.ColumnDefinitions>
+                                    <Border Width="40" Height="40" CornerRadius="8" Background="{DynamicResource SubtleFillColorSecondaryBrush}">
+                                        <TextBlock Style="{StaticResource Icon}" Text="&#xE708;" FontSize="20" HorizontalAlignment="Center"
+                                                   Foreground="{DynamicResource TextFillColorPrimaryBrush}" />
+                                    </Border>
+                                    <StackPanel Grid.Column="1" Margin="12,0,0,0" VerticalAlignment="Center">
+                                        <TextBlock Style="{StaticResource CardHeader}" Text="{l:T NightLight}" />
+                                        <TextBlock Style="{StaticResource Caption}" Text="{l:T NightLightDesc}" />
+                                    </StackPanel>
+                                    <CheckBox Grid.Column="2" Style="{StaticResource ToggleSwitch}" IsChecked="{Binding NightLightEnabled}"
+                                              IsEnabled="{Binding NightLightSupported}" VerticalAlignment="Center"
+                                              AutomationProperties.Name="{l:T NightLight}" />
+                                </Grid>
+                                <Grid Height="40" Visibility="{Binding NightLightSupported, Converter={StaticResource BoolVis}}">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="28" />
+                                        <ColumnDefinition Width="64" />
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="44" />
+                                    </Grid.ColumnDefinitions>
+                                    <TextBlock Style="{StaticResource Icon}" Text="&#xE793;" Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
+                                    <TextBlock Grid.Column="1" Style="{StaticResource Secondary}" Text="{l:T Strength}" VerticalAlignment="Center" />
+                                    <Slider Grid.Column="2" Minimum="0" Maximum="100" TickFrequency="1" IsSnapToTickEnabled="True" VerticalAlignment="Center"
+                                            Value="{Binding NightLightStrength, Mode=TwoWay}" AutomationProperties.Name="{l:T Strength}" />
+                                    <TextBlock Grid.Column="3" Text="{Binding NightLightStrength}" HorizontalAlignment="Right" VerticalAlignment="Center"
+                                               FontWeight="SemiBold" Foreground="{DynamicResource TextFillColorPrimaryBrush}" />
+                                </Grid>
+                                <DockPanel Margin="0,4,0,2">
+                                    <Button DockPanel.Dock="Right" Style="{StaticResource SubtleButton}" Command="{Binding RefreshNightLightCommand}"
+                                            AutomationProperties.Name="{l:T NightLightCheck}" Padding="10,4" VerticalAlignment="Center">
+                                        <StackPanel Orientation="Horizontal">
+                                            <TextBlock Style="{StaticResource Icon}" Text="&#xE72C;" FontSize="12" Margin="0,0,6,0" />
+                                            <TextBlock Text="{l:T NightLightCheck}" FontSize="12" />
+                                        </StackPanel>
+                                    </Button>
+                                    <ProgressBar DockPanel.Dock="Right" IsIndeterminate="True" Width="60" Margin="0,0,10,0" VerticalAlignment="Center"
+                                                 Visibility="{Binding NightLightBusy, Converter={StaticResource BoolVis}}" />
+                                    <StackPanel VerticalAlignment="Center">
+                                        <TextBlock Style="{StaticResource Caption}" Text="{l:T NightLightHow}" TextWrapping="Wrap" />
+                                        <TextBlock Style="{StaticResource Caption}" Text="{l:T NightLightUnknown}" TextWrapping="Wrap"
+                                                   Visibility="{Binding NightLightKnown, Converter={StaticResource BoolVisInv}}" />
+                                    </StackPanel>
+                                </DockPanel>
+                                <DockPanel Margin="0,6,0,2" Visibility="{Binding NightLightWindowsScheduleOn, Converter={StaticResource BoolVis}}">
+                                    <Button DockPanel.Dock="Right" Command="{Binding DisableWindowsNightLightScheduleCommand}" Padding="12,5" VerticalAlignment="Center"
+                                            AutomationProperties.Name="{l:T NightLightDisableWinSchedule}">
+                                        <TextBlock Text="{l:T NightLightDisableWinSchedule}" />
+                                    </Button>
+                                    <TextBlock Style="{StaticResource Icon}" Text="&#xE7BA;" FontSize="14" Margin="0,0,8,0"
+                                               Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
+                                    <TextBlock Style="{StaticResource Caption}" Text="{l:T NightLightWinSchedule}" TextWrapping="Wrap"
+                                               VerticalAlignment="Center" Margin="0,0,12,0" />
+                                </DockPanel>
+                            </StackPanel>
+                        </Border>
                     </StackPanel>
                 </ScrollViewer>
 
@@ -443,6 +507,48 @@
                                                         </DataTemplate>
                                                     </ItemsControl.ItemTemplate>
                                                 </ItemsControl>
+
+                                                <!-- Night Light row -->
+                                                <Border BorderBrush="{DynamicResource CardStrokeColorDefaultBrush}" BorderThickness="0,1,0,0" Padding="0,8,0,4"
+                                                        Visibility="{Binding DataContext.NightLightSupported, RelativeSource={RelativeSource AncestorType=Window}, Converter={StaticResource BoolVis}}">
+                                                    <Grid>
+                                                        <Grid.ColumnDefinitions>
+                                                            <ColumnDefinition Width="28" />
+                                                            <ColumnDefinition Width="170" />
+                                                            <ColumnDefinition Width="*" />
+                                                            <ColumnDefinition Width="24" />
+                                                            <ColumnDefinition Width="*" />
+                                                        </Grid.ColumnDefinitions>
+                                                        <TextBlock Style="{StaticResource Icon}" Text="&#xE708;" Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
+                                                        <TextBlock Grid.Column="1" Text="{l:T NightLight}" VerticalAlignment="Center" FontSize="13"
+                                                                   Foreground="{DynamicResource TextFillColorPrimaryBrush}" />
+                                                        <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center">
+                                                            <CheckBox Content="{l:T NightLightChange}" IsChecked="{Binding NightLightSet}" MinWidth="78" VerticalAlignment="Center" />
+                                                            <CheckBox Style="{StaticResource ToggleSwitch}" Content="{l:T NightLightTurnOn}" IsChecked="{Binding NightLightOn}"
+                                                                      IsEnabled="{Binding NightLightSet}" Margin="8,0,0,0" VerticalAlignment="Center" />
+                                                        </StackPanel>
+                                                        <Grid Grid.Column="4">
+                                                            <Grid.ColumnDefinitions>
+                                                                <ColumnDefinition Width="Auto" />
+                                                                <ColumnDefinition Width="*" />
+                                                                <ColumnDefinition Width="34" />
+                                                            </Grid.ColumnDefinitions>
+                                                            <TextBlock Text="{l:T Strength}" MinWidth="78" VerticalAlignment="Center" Padding="28,0,0,0"
+                                                                       Foreground="{DynamicResource TextFillColorPrimaryBrush}" />
+                                                            <Slider Grid.Column="1" Minimum="0" Maximum="100" TickFrequency="1" IsSnapToTickEnabled="True"
+                                                                    Value="{Binding NightLightStrength, Mode=TwoWay}" VerticalAlignment="Center" Margin="4,0">
+                                                                <Slider.IsEnabled>
+                                                                    <MultiBinding Converter="{StaticResource AllTrue}">
+                                                                        <Binding Path="NightLightSet" />
+                                                                        <Binding Path="NightLightOn" />
+                                                                    </MultiBinding>
+                                                                </Slider.IsEnabled>
+                                                            </Slider>
+                                                            <TextBlock Grid.Column="2" Text="{Binding NightLightStrength}" HorizontalAlignment="Right" VerticalAlignment="Center"
+                                                                       FontWeight="SemiBold" Foreground="{DynamicResource TextFillColorPrimaryBrush}" />
+                                                        </Grid>
+                                                    </Grid>
+                                                </Border>
                                             </StackPanel>
                                         </Grid>
                                     </Border>

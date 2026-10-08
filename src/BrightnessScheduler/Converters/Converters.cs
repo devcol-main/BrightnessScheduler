@@ -58,3 +58,16 @@ public sealed class LevelToBrushConverter : IValueConverter
 
     public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture) => Binding.DoNothing;
 }
+
+/// <summary>MultiBinding: true when every value is true.</summary>
+public sealed class AllTrueConverter : IMultiValueConverter
+{
+    public object Convert(object[] values, Type targetType, object parameter, CultureInfo culture)
+    {
+        foreach (var v in values) if (v is not true) return false;
+        return true;
+    }
+
+    public object[] ConvertBack(object value, Type[] targetTypes, object parameter, CultureInfo culture)
+        => throw new NotSupportedException();
+}

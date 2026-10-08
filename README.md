@@ -22,6 +22,7 @@
   - Built-in laptop panels via WMI
   - External monitors via **DDC/CI** (brightness `VCP 0x10`, contrast `VCP 0x12`)
 - **Switch modes instantly** — jump to any entry (e.g. *Night* during the day) from the dashboard or tray; the schedule takes over again at the next change.
+- **Windows Night Light** — turn Night Light on/off and set its strength per schedule entry, or toggle it live from the dashboard / tray. (Windows has no public API for Night Light, so the app drives the Settings page — its window appears for about a second when Night Light changes.)
 - **Live manual control** from the dashboard sliders.
 - **Smooth transitions** — optionally fade over up to 10 minutes when an entry starts.
 - **Self-healing** — re-applies after sleep/wake, unlock, and monitor hot-plug. Optional periodic re-apply for monitors that reset themselves.

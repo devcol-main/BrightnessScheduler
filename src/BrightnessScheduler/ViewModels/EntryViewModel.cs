@@ -74,6 +74,25 @@ public sealed class EntryViewModel : ObservableObject
 
     public string TimeText => Model.Time;
 
+    // ----- Night Light -----
+    public bool NightLightSet
+    {
+        get => Model.NightLight.Set;
+        set { if (Model.NightLight.Set != value) { Model.NightLight.Set = value; OnPropertyChanged(); TargetChanged(); } }
+    }
+
+    public bool NightLightOn
+    {
+        get => Model.NightLight.Enabled;
+        set { if (Model.NightLight.Enabled != value) { Model.NightLight.Enabled = value; OnPropertyChanged(); TargetChanged(); } }
+    }
+
+    public int NightLightStrength
+    {
+        get => Model.NightLight.Strength;
+        set { if (Model.NightLight.Strength != value) { Model.NightLight.Strength = value; OnPropertyChanged(); TargetChanged(); } }
+    }
+
     /// <summary>Highlight the entry currently in effect.</summary>
     public bool IsActive
     {

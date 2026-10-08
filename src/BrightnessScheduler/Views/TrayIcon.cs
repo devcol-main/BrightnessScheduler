@@ -19,7 +19,7 @@ public sealed class TrayIcon : IDisposable
     private readonly MainViewModel _vm;
     private readonly WinForms.NotifyIcon _icon;
     private readonly WinForms.ContextMenuStrip _menu;
-    private readonly WinForms.ToolStripMenuItem _status, _open, _apply, _modes, _back, _pause1h, _pauseNext, _pauseForever, _resume, _exit;
+    private readonly WinForms.ToolStripMenuItem _status, _open, _apply, _modes, _back, _nightLight, _pause1h, _pauseNext, _pauseForever, _resume, _exit;
     private readonly Icon _dayIcon, _nightIcon, _pausedIcon;
 
     public TrayIcon(SchedulerService scheduler, MainViewModel vm, Action showWindow, Action exit)
@@ -38,6 +38,7 @@ public sealed class TrayIcon : IDisposable
         _modes = new WinForms.ToolStripMenuItem("");
         ((WinForms.ToolStripDropDownMenu)_modes.DropDown).ShowCheckMargin = true;
         _back = new WinForms.ToolStripMenuItem("", null, (_, _) => _scheduler.ClearOverride());
+        _nightLight = new WinForms.ToolStripMenuItem("", null, (_, _) => { _vm.NightLightEnabled = !_vm.NightLightEnabled; Refresh(); });
         _pause1h = new WinForms.ToolStripMenuItem("", null, (_, _) => _scheduler.Pause(TimeSpan.FromHours(1)));
         _pauseNext = new WinForms.ToolStripMenuItem("", null, (_, _) => _scheduler.PauseUntilNext());
         _pauseForever = new WinForms.ToolStripMenuItem("", null, (_, _) => _scheduler.Pause(null));
@@ -46,7 +47,7 @@ public sealed class TrayIcon : IDisposable
         _menu.Items.AddRange(new WinForms.ToolStripItem[]
         {
             _status, new WinForms.ToolStripSeparator(),
-            _open, _apply, _modes, _back, new WinForms.ToolStripSeparator(),
+            _open, _apply, _modes, _back, _nightLight, new WinForms.ToolStripSeparator(),
             _pause1h, _pauseNext, _pauseForever, _resume, new WinForms.ToolStripSeparator(),
             _exit,
         });
@@ -95,6 +96,8 @@ public sealed class TrayIcon : IDisposable
             _modes.DropDownItems.Add(item);
         }
         _modes.Visible = _vm.ShowModeSwitcher;
+        _nightLight.Text = (_vm.NightLightEnabled ? "\u2713  " : "      ") + Loc.T("NightLight");
+        _nightLight.Visible = _vm.NightLightSupported;
 
         _pause1h.Visible = _pauseNext.Visible = _pauseForever.Visible = !paused;
         _resume.Visible = paused;

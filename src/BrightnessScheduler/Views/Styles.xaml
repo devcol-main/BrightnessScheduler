@@ -9,6 +9,7 @@
     <conv:BoolToVisibilityConverter x:Key="BoolVisInv" Invert="True" />
     <conv:InverseBoolConverter x:Key="Not" />
     <conv:LevelToBrushConverter x:Key="LevelBrush" />
+    <conv:AllTrueConverter x:Key="AllTrue" />
 
     <FontFamily x:Key="IconFont">Segoe Fluent Icons, Segoe MDL2 Assets</FontFamily>
     <FontFamily x:Key="UiFont">Segoe UI Variable Text, Segoe UI, Malgun Gothic</FontFamily>

@@ -35,6 +35,8 @@ public sealed class ScheduleEntry
     /// <summary>Days of week (0 = Sunday … 6 = Saturday) this entry starts on.</summary>
     public List<int> Days { get; set; } = new() { 0, 1, 2, 3, 4, 5, 6 };
     public List<MonitorTarget> Targets { get; set; } = new();
+    /// <summary>Windows Night Light for this entry.</summary>
+    public NightLightTarget NightLight { get; set; } = new();
 
     public TimeSpan StartTime
     {
@@ -49,6 +51,15 @@ public sealed class ScheduleEntry
         var model = Services.MonitorService.ModelOf(monitorId);
         return Targets.FirstOrDefault(t => string.Equals(Services.MonitorService.ModelOf(t.MonitorId), model, StringComparison.OrdinalIgnoreCase));
     }
+}
+
+public sealed class NightLightTarget
+{
+    /// <summary>Change Night Light when this entry starts.</summary>
+    public bool Set { get; set; }
+    public bool Enabled { get; set; }
+    /// <summary>0–100, same scale as Windows Settings.</summary>
+    public int Strength { get; set; } = 50;
 }
 
 public sealed class MonitorTarget
