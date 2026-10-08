@@ -31,14 +31,14 @@ public partial class MainWindow : Window
     private System.Windows.Threading.DispatcherTimer? _nightLightKeyTimer;
 
     /// <summary>
-    /// Keyboard: apply 1 second after the last key press, so tapping the arrow keys
+    /// Keyboard: apply 0.5 seconds after the last key press, so tapping the arrow keys
     /// several times opens Settings only once.
     /// </summary>
     private void NightLightSlider_KeyUp(object sender, System.Windows.Input.KeyEventArgs e)
     {
         if (_nightLightKeyTimer == null)
         {
-            _nightLightKeyTimer = new System.Windows.Threading.DispatcherTimer { Interval = System.TimeSpan.FromSeconds(1) };
+            _nightLightKeyTimer = new System.Windows.Threading.DispatcherTimer { Interval = System.TimeSpan.FromMilliseconds(500) };
             _nightLightKeyTimer.Tick += (_, _) =>
             {
                 _nightLightKeyTimer.Stop();
