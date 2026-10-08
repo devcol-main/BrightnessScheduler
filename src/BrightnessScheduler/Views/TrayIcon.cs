@@ -1,5 +1,9 @@
+// Copyright 2026 DevCol
+// SPDX-License-Identifier: Apache-2.0
+
 using System;
 using System.Drawing;
+using System.Linq;
 using System.Windows;
 using BrightnessScheduler.Localization;
 using BrightnessScheduler.Services;
@@ -15,7 +19,7 @@ public sealed class TrayIcon : IDisposable
     private readonly MainViewModel _vm;
     private readonly WinForms.NotifyIcon _icon;
     private readonly WinForms.ContextMenuStrip _menu;
-    private readonly WinForms.ToolStripMenuItem _status, _open, _apply, _pause1h, _pauseNext, _pauseForever, _resume, _exit;
+    private readonly WinForms.ToolStripMenuItem _status, _open, _apply, _modes, _back, _pause1h, _pauseNext, _pauseForever, _resume, _exit;
     private readonly Icon _dayIcon, _nightIcon, _pausedIcon;
 
     public TrayIcon(SchedulerService scheduler, MainViewModel vm, Action showWindow, Action exit)
@@ -31,6 +35,9 @@ public sealed class TrayIcon : IDisposable
         _open = new WinForms.ToolStripMenuItem("", null, (_, _) => showWindow());
         _open.Font = new Font(_open.Font, System.Drawing.FontStyle.Bold);
         _apply = new WinForms.ToolStripMenuItem("", null, (_, _) => _scheduler.ApplyNow());
+        _modes = new WinForms.ToolStripMenuItem("");
+        ((WinForms.ToolStripDropDownMenu)_modes.DropDown).ShowCheckMargin = true;
+        _back = new WinForms.ToolStripMenuItem("", null, (_, _) => _scheduler.ClearOverride());
         _pause1h = new WinForms.ToolStripMenuItem("", null, (_, _) => _scheduler.Pause(TimeSpan.FromHours(1)));
         _pauseNext = new WinForms.ToolStripMenuItem("", null, (_, _) => _scheduler.PauseUntilNext());
         _pauseForever = new WinForms.ToolStripMenuItem("", null, (_, _) => _scheduler.Pause(null));
@@ -39,7 +46,7 @@ public sealed class TrayIcon : IDisposable
         _menu.Items.AddRange(new WinForms.ToolStripItem[]
         {
             _status, new WinForms.ToolStripSeparator(),
-            _open, _apply, new WinForms.ToolStripSeparator(),
+            _open, _apply, _modes, _back, new WinForms.ToolStripSeparator(),
             _pause1h, _pauseNext, _pauseForever, _resume, new WinForms.ToolStripSeparator(),
             _exit,
         });
@@ -73,6 +80,21 @@ public sealed class TrayIcon : IDisposable
         _pauseForever.Text = Loc.T("PauseForever");
         _resume.Text = Loc.T("Resume");
         _exit.Text = Loc.T("Tray_Exit");
+
+        _modes.Text = Loc.T("SwitchMode");
+        _back.Text = Loc.T("BackToSchedule");
+        _back.Visible = _scheduler.IsOverridden;
+        _modes.DropDownItems.Clear();
+        foreach (var entry in _vm.Entries.Where(en => en.Enabled))
+        {
+            var e = entry;
+            var item = new WinForms.ToolStripMenuItem($"{e.DisplayName}  ({e.TimeText})", null, (_, _) => _scheduler.SetOverride(e.Model))
+            {
+                Checked = e.IsActive,
+            };
+            _modes.DropDownItems.Add(item);
+        }
+        _modes.Visible = _vm.ShowModeSwitcher;
 
         _pause1h.Visible = _pauseNext.Visible = _pauseForever.Visible = !paused;
         _resume.Visible = paused;

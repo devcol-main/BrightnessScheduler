@@ -1,3 +1,6 @@
+// Copyright 2026 DevCol
+// SPDX-License-Identifier: Apache-2.0
+
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
@@ -55,7 +58,7 @@ public sealed class Loc : INotifyPropertyChanged
         ["Nav_Settings"] = ("설정", "Settings"),
         ["Nav_About"] = ("정보", "About"),
 
-        ["CurrentSchedule"] = ("현재 일정", "Current schedule"),
+        ["CurrentSchedule"] = ("현재 일정", "Current Schedule"),
         ["NoActive"] = ("활성 일정 없음", "No active entry"),
         ["SinceFmt"] = ("{0}부터 적용 중", "Active since {0}"),
         ["NextFmt"] = ("다음: {0} · {1} ({2} 후)", "Next: {0} at {1} (in {2})"),
@@ -68,7 +71,13 @@ public sealed class Loc : INotifyPropertyChanged
         ["Resume"] = ("재개", "Resume"),
         ["PausedUntilFmt"] = ("일시정지됨 · {0}까지", "Paused until {0}"),
         ["PausedForever"] = ("일시정지됨", "Paused"),
-        ["TodayTimeline"] = ("오늘의 타임라인", "Today's timeline"),
+        ["TodayTimeline"] = ("오늘의 타임라인", "Today's Timeline"),
+        ["SwitchMode"] = ("모드 전환", "Switch Mode"),
+        ["SwitchModeDesc"] = ("선택한 모드를 지금 바로 적용합니다. 다음 일정이 시작되면 자동으로 스케줄로 돌아가요.",
+                              "Apply a mode right now. The schedule takes over again at the next change."),
+        ["OverrideUntilFmt"] = ("임시 적용 중 · {0}에 스케줄로 복귀", "Temporary · back to schedule at {0}"),
+        ["OverrideForever"] = ("임시 적용 중", "Temporary override"),
+        ["BackToSchedule"] = ("스케줄로 돌아가기", "Back to Schedule"),
 
         ["Displays"] = ("디스플레이", "Displays"),
         ["DisplaysDesc"] = ("슬라이더로 바로 조절할 수 있어요. 다음 일정이 시작되면 스케줄 값으로 바뀝니다.",
@@ -148,7 +157,7 @@ public sealed class Loc : INotifyPropertyChanged
                     "If laptop brightness keeps changing on its own, turn off auto / content-adaptive brightness in Windows Settings › Display."),
         ["Tip3"] = ("창을 닫아도 트레이에서 계속 실행됩니다. 완전히 끄려면 트레이 아이콘 › 종료를 선택하세요.",
                     "Closing the window keeps the app running in the tray. Use tray icon › Exit to quit."),
-        ["License"] = ("MIT 라이선스", "MIT License"),
+        ["License"] = ("Apache License 2.0 · © 2026 DevCol", "Apache License 2.0 · © 2026 DevCol"),
 
         ["UninstallConfirmFmt"] = ("자동 실행 등록과 설정·로그 폴더를 삭제할까요?\n\n{0}\n\n삭제 후 exe 파일만 지우면 완전히 제거됩니다.",
                                    "Remove the autostart entry and delete settings & log?\n\n{0}\n\nAfterwards just delete the exe to finish uninstalling."),

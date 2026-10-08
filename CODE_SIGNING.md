@@ -39,7 +39,7 @@ It only talks to your own displays (DDC/CI, WMI). Settings and a log file are st
 ## Maintainer setup: SignPath Foundation (one-time)
 
 1. **Make the project eligible**
-   - Public repository with the MIT license (already done), at least one release published.
+   - Public repository with an OSI-approved license — Apache-2.0 (already done), at least one release published.
    - Turn on 2FA for the GitHub account.
 2. **Apply** at <https://signpath.org/apply> with the repository URL. Wait for approval (usually days to a few weeks).
 3. **In SignPath** (after approval you get an organization):

@@ -93,7 +93,8 @@
                                     <TextBlock Text="{Binding ActiveTitle}" FontSize="24" FontWeight="SemiBold" Margin="0,2,0,2"
                                                Foreground="{DynamicResource TextFillColorPrimaryBrush}" />
                                     <TextBlock Style="{StaticResource Secondary}" Text="{Binding ActiveSubtitle}" />
-                                    <TextBlock Style="{StaticResource Secondary}" Text="{Binding NextText}" />
+                                    <TextBlock Style="{StaticResource Secondary}" Text="{Binding NextText}"
+                                               Visibility="{Binding IsOverridden, Converter={StaticResource BoolVisInv}}" />
                                 </StackPanel>
                                 <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center">
                                     <Button Style="{StaticResource AccentButton}" Command="{Binding ApplyNowCommand}" AutomationProperties.Name="{l:T ApplyNow}"
@@ -127,6 +128,48 @@
                                     </Button>
                                 </StackPanel>
                             </Grid>
+                        </Border>
+
+                        <!-- Mode switcher (only with 2+ enabled entries) -->
+                        <Border Style="{StaticResource Card}" Margin="0,12,0,0"
+                                Visibility="{Binding ShowModeSwitcher, Converter={StaticResource BoolVis}}">
+                            <StackPanel>
+                                <DockPanel Margin="0,0,0,10">
+                                    <Button DockPanel.Dock="Right" Command="{Binding BackToScheduleCommand}" AutomationProperties.Name="{l:T BackToSchedule}"
+                                            Padding="12,6" VerticalAlignment="Center"
+                                            Visibility="{Binding IsOverridden, Converter={StaticResource BoolVis}}">
+                                        <StackPanel Orientation="Horizontal">
+                                            <TextBlock Style="{StaticResource Icon}" Text="&#xE7A7;" FontSize="14" Margin="0,0,8,0" />
+                                            <TextBlock Text="{l:T BackToSchedule}" />
+                                        </StackPanel>
+                                    </Button>
+                                    <StackPanel>
+                                        <TextBlock Style="{StaticResource CardHeader}" Text="{l:T SwitchMode}" />
+                                        <TextBlock Style="{StaticResource Caption}" Text="{l:T SwitchModeDesc}" Margin="0,2,12,0" TextWrapping="Wrap" />
+                                    </StackPanel>
+                                </DockPanel>
+                                <ItemsControl x:Name="ModeList" ItemsSource="{Binding Entries}">
+                                    <ItemsControl.ItemsPanel>
+                                        <ItemsPanelTemplate>
+                                            <WrapPanel />
+                                        </ItemsPanelTemplate>
+                                    </ItemsControl.ItemsPanel>
+                                    <ItemsControl.ItemTemplate>
+                                        <DataTemplate DataType="{x:Type vm:EntryViewModel}">
+                                            <Button Style="{StaticResource ModeChip}"
+                                                    Command="{Binding DataContext.SwitchModeCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}" CommandParameter="{Binding}"
+                                                    AutomationProperties.Name="{Binding DisplayName}"
+                                                    Visibility="{Binding Enabled, Converter={StaticResource BoolVis}}">
+                                                <StackPanel Orientation="Horizontal">
+                                                    <Ellipse Width="12" Height="12" Fill="{Binding Level, Converter={StaticResource LevelBrush}}" Margin="0,0,8,0" VerticalAlignment="Center" />
+                                                    <TextBlock Text="{Binding DisplayName}" VerticalAlignment="Center" />
+                                                    <TextBlock Text="{Binding TimeText, StringFormat=' · {0}'}" VerticalAlignment="Center" Opacity="0.7" />
+                                                </StackPanel>
+                                            </Button>
+                                        </DataTemplate>
+                                    </ItemsControl.ItemTemplate>
+                                </ItemsControl>
+                            </StackPanel>
                         </Border>
 
                         <!-- Timeline -->

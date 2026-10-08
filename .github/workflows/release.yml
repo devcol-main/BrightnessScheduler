@@ -57,6 +57,7 @@ jobs:
           New-Item -ItemType Directory -Force release | Out-Null
           $src = if (Test-Path signed) { 'signed' } else { 'dist' }
           Copy-Item "$src/*.exe" release/
+          Copy-Item LICENSE, NOTICE release/
           Get-ChildItem release/*.exe | ForEach-Object {
             $sig = Get-AuthenticodeSignature $_.FullName
             "{0,-50} {1,-12} {2}" -f $_.Name, $sig.Status, $sig.SignerCertificate.Subject

@@ -1,3 +1,6 @@
+// Copyright 2026 DevCol
+// SPDX-License-Identifier: Apache-2.0
+
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
@@ -37,6 +40,8 @@ public sealed class MainViewModel : ObservableObject
     public ICommand PauseNextCommand { get; }
     public ICommand PauseForeverCommand { get; }
     public ICommand ResumeCommand { get; }
+    public ICommand SwitchModeCommand { get; }
+    public ICommand BackToScheduleCommand { get; }
     public ICommand AddEntryCommand { get; }
     public ICommand RefreshDisplaysCommand { get; }
     public ICommand OpenDataFolderCommand { get; }
@@ -64,6 +69,8 @@ public sealed class MainViewModel : ObservableObject
         PauseNextCommand = new RelayCommand(() => _scheduler.PauseUntilNext());
         PauseForeverCommand = new RelayCommand(() => _scheduler.Pause(null));
         ResumeCommand = new RelayCommand(() => _scheduler.Resume());
+        SwitchModeCommand = new RelayCommand(p => { if (p is EntryViewModel vm) _scheduler.SetOverride(vm.Model); });
+        BackToScheduleCommand = new RelayCommand(() => _scheduler.ClearOverride());
         AddEntryCommand = new RelayCommand(AddEntry);
         RefreshDisplaysCommand = new RelayCommand(async () => await DetectDisplaysAsync(), () => !IsDetecting);
         OpenDataFolderCommand = new RelayCommand(() => OpenShell(SettingsService.DataFolder));
@@ -226,6 +233,7 @@ public sealed class MainViewModel : ObservableObject
     {
         _saveTimer.Stop();
         _saveTimer.Start();
+        OnPropertyChanged(nameof(ShowModeSwitcher));
         RefreshTimeline();
     }
 
@@ -241,7 +249,12 @@ public sealed class MainViewModel : ObservableObject
     // ---------------- status ----------------
     public bool IsPaused => _scheduler.IsPaused;
 
-    public string ActiveTitle => _scheduler.ActiveEntry is { } e
+    public bool IsOverridden => _scheduler.IsOverridden;
+
+    /// <summary>Mode switcher is only useful when there is more than one enabled entry.</summary>
+    public bool ShowModeSwitcher => Entries.Count(e => e.Enabled) >= 2;
+
+    public string ActiveTitle => _scheduler.EffectiveEntry is { } e
         ? (string.IsNullOrWhiteSpace(e.Name) ? Loc.T("Unnamed") : e.Name)
         : Loc.T("NoActive");
 
@@ -254,6 +267,11 @@ public sealed class MainViewModel : ObservableObject
                 var until = _scheduler.PausedUntil!.Value;
                 return until == DateTime.MaxValue ? Loc.T("PausedForever") : Loc.F("PausedUntilFmt", FormatWhen(until));
             }
+            if (_scheduler.IsOverridden)
+            {
+                var until = _scheduler.OverrideUntil;
+                return until == DateTime.MaxValue ? Loc.T("OverrideForever") : Loc.F("OverrideUntilFmt", FormatWhen(until));
+            }
             return _scheduler.ActiveEntry != null ? Loc.F("SinceFmt", FormatWhen(_scheduler.ActiveSince)) : "";
         }
     }
@@ -262,7 +280,7 @@ public sealed class MainViewModel : ObservableObject
         ? Loc.F("NextFmt", string.IsNullOrWhiteSpace(n.Name) ? Loc.T("Unnamed") : n.Name, FormatWhen(_scheduler.NextAt), Loc.Duration(_scheduler.NextAt - DateTime.Now))
         : Loc.T("NoNext");
 
-    public double ActiveLevel => Entries.FirstOrDefault(e => ReferenceEquals(e.Model, _scheduler.ActiveEntry))?.Level ?? 1.0;
+    public double ActiveLevel => Entries.FirstOrDefault(e => ReferenceEquals(e.Model, _scheduler.EffectiveEntry))?.Level ?? 1.0;
 
     /// <summary>Moon for dim entries, sun for bright ones, pause icon while paused.</summary>
     public string StatusGlyph => _scheduler.IsPaused ? "" : ActiveLevel < 0.6 ? "" : "";
@@ -290,8 +308,10 @@ public sealed class MainViewModel : ObservableObject
 
     public void RefreshStatus()
     {
-        foreach (var e in Entries) e.IsActive = ReferenceEquals(e.Model, _scheduler.ActiveEntry);
+        foreach (var e in Entries) e.IsActive = ReferenceEquals(e.Model, _scheduler.EffectiveEntry);
         OnPropertyChanged(nameof(IsPaused));
+        OnPropertyChanged(nameof(IsOverridden));
+        OnPropertyChanged(nameof(ShowModeSwitcher));
         OnPropertyChanged(nameof(ActiveTitle));
         OnPropertyChanged(nameof(ActiveSubtitle));
         OnPropertyChanged(nameof(NextText));

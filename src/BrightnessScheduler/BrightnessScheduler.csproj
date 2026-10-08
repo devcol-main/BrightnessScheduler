@@ -12,7 +12,7 @@
     <RootNamespace>BrightnessScheduler</RootNamespace>
     <ApplicationIcon>Assets\app.ico</ApplicationIcon>
     <ApplicationManifest>app.manifest</ApplicationManifest>
-    <Version>1.1.0</Version>
+    <Version>1.2.0</Version>
     <Product>Brightness Scheduler</Product>
     <Description>Schedule laptop and external monitor (DDC/CI) brightness and contrast.</Description>
     <Copyright>Copyright (c) 2026 DevCol</Copyright>

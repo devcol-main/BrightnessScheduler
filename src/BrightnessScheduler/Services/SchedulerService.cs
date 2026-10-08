@@ -1,3 +1,6 @@
+// Copyright 2026 DevCol
+// SPDX-License-Identifier: Apache-2.0
+
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -30,6 +33,15 @@ public sealed class SchedulerService : IDisposable
     public DateTime NextAt { get; private set; }
     public DateTime? PausedUntil { get; private set; }
     public bool IsPaused => PausedUntil.HasValue && PausedUntil.Value > DateTime.Now;
+
+    /// <summary>Entry chosen manually from the mode switcher; stays until <see cref="OverrideUntil"/>.</summary>
+    public ScheduleEntry? OverrideEntry { get; private set; }
+    public DateTime OverrideUntil { get; private set; }
+    private DateTime _overrideSince;
+    public bool IsOverridden => OverrideEntry != null;
+
+    /// <summary>The entry whose values are actually in effect (override or schedule).</summary>
+    public ScheduleEntry? EffectiveEntry => OverrideEntry ?? ActiveEntry;
 
     /// <summary>Status (active / next / paused) changed.</summary>
     public event EventHandler? StateChanged;
@@ -75,6 +87,30 @@ public sealed class SchedulerService : IDisposable
         var (next, at) = ScheduleMath.GetNext(_settings.Entries, now);
         ActiveEntry = active; ActiveSince = since; NextEntry = next; NextAt = at;
 
+        // Temporary mode override ends at the next scheduled change (or if its entry was removed/disabled).
+        if (OverrideEntry != null && (now >= OverrideUntil || !OverrideEntry.Enabled || !_settings.Entries.Contains(OverrideEntry)))
+        {
+            Logger.Info($"Override '{OverrideEntry.Name}' ended");
+            OverrideEntry = null;
+            _lastKey = null;
+        }
+        if (OverrideEntry != null)
+        {
+            if (!IsPaused)
+            {
+                var okey = "override:" + OverrideEntry.Id + "@" + _overrideSince.Ticks;
+                bool enforceO = _settings.EnforceIntervalMinutes > 0 && now - _lastApply >= TimeSpan.FromMinutes(_settings.EnforceIntervalMinutes);
+                if (okey != _lastKey || force || enforceO)
+                {
+                    _lastKey = okey;
+                    Logger.Info($"Applying override '{OverrideEntry.Name}'");
+                    Apply(OverrideEntry, 0);
+                }
+            }
+            StateChanged?.Invoke(this, EventArgs.Empty);
+            return;
+        }
+
         if (!IsPaused && active != null)
         {
             var key = active.Id + "@" + since.Ticks;
@@ -99,6 +135,33 @@ public sealed class SchedulerService : IDisposable
 
     /// <summary>Applies an arbitrary entry right away (preview from the editor).</summary>
     public void Preview(ScheduleEntry entry) => Apply(entry, 0);
+
+    /// <summary>
+    /// Switch to another mode right now. It stays until the next scheduled change,
+    /// then the schedule takes over again. Choosing the scheduled entry returns to the schedule.
+    /// </summary>
+    public void SetOverride(ScheduleEntry entry)
+    {
+        PausedUntil = null;
+        if (ReferenceEquals(entry, ActiveEntry))
+        {
+            ClearOverride();
+            return;
+        }
+        OverrideEntry = entry;
+        _overrideSince = DateTime.Now;
+        OverrideUntil = NextEntry != null ? NextAt : DateTime.MaxValue;
+        Logger.Info($"Override '{entry.Name}' until {OverrideUntil}");
+        Evaluate(force: true);
+    }
+
+    public void ClearOverride()
+    {
+        if (OverrideEntry != null) Logger.Info("Override cleared");
+        OverrideEntry = null;
+        _lastKey = null;
+        Evaluate(force: true);
+    }
 
     public void Pause(TimeSpan? duration)
     {

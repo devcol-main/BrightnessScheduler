@@ -1,3 +1,6 @@
+// Copyright 2026 DevCol
+// SPDX-License-Identifier: Apache-2.0
+
 using System;
 using System.Linq;
 using System.Threading;

@@ -21,6 +21,7 @@
 - **Works with laptops and external monitors**
   - Built-in laptop panels via WMI
   - External monitors via **DDC/CI** (brightness `VCP 0x10`, contrast `VCP 0x12`)
+- **Switch modes instantly** — jump to any entry (e.g. *Night* during the day) from the dashboard or tray; the schedule takes over again at the next change.
 - **Live manual control** from the dashboard sliders.
 - **Smooth transitions** — optionally fade over up to 10 minutes when an entry starts.
 - **Self-healing** — re-applies after sleep/wake, unlock, and monitor hot-plug. Optional periodic re-apply for monitors that reset themselves.
@@ -123,4 +124,6 @@ Free code signing provided by [SignPath.io](https://about.signpath.io), certific
 
 ## License
 
-[MIT](LICENSE)
+Copyright 2026 DevCol. Licensed under the [Apache License 2.0](LICENSE).
+
+If you redistribute this project or build on it, you must keep the [LICENSE](LICENSE), the [NOTICE](NOTICE) file and the copyright notices, and clearly mark the files you changed.
