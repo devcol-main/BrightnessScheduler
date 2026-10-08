@@ -28,9 +28,31 @@ public partial class MainWindow : Window
         EnforceCombo.SelectedIndex = index < 0 ? 0 : index;
     }
 
-    /// <summary>Night Light strength is applied only when the slider is released (mouse up / key up).</summary>
+    private System.Windows.Threading.DispatcherTimer? _nightLightKeyTimer;
+
+    /// <summary>
+    /// Keyboard: apply 1 second after the last key press, so tapping the arrow keys
+    /// several times opens Settings only once.
+    /// </summary>
+    private void NightLightSlider_KeyUp(object sender, System.Windows.Input.KeyEventArgs e)
+    {
+        if (_nightLightKeyTimer == null)
+        {
+            _nightLightKeyTimer = new System.Windows.Threading.DispatcherTimer { Interval = System.TimeSpan.FromSeconds(1) };
+            _nightLightKeyTimer.Tick += (_, _) =>
+            {
+                _nightLightKeyTimer.Stop();
+                (DataContext as MainViewModel)?.CommitNightLightStrength();
+            };
+        }
+        _nightLightKeyTimer.Stop();
+        _nightLightKeyTimer.Start();
+    }
+
+    /// <summary>Mouse: apply once when the slider is released (or loses focus).</summary>
     private void NightLightSlider_Release(object sender, RoutedEventArgs e)
     {
+        _nightLightKeyTimer?.Stop();
         // Let the slider finish updating its value first.
         Dispatcher.BeginInvoke(() => (DataContext as MainViewModel)?.CommitNightLightStrength(),
             System.Windows.Threading.DispatcherPriority.Background);

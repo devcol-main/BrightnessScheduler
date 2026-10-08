@@ -314,7 +314,7 @@
                                     <Slider Grid.Column="2" Minimum="0" Maximum="100" TickFrequency="1" IsSnapToTickEnabled="True" VerticalAlignment="Center"
                                             Value="{Binding NightLightStrength, Mode=TwoWay}" AutomationProperties.Name="{l:T Strength}"
                                             PreviewMouseLeftButtonUp="NightLightSlider_Release" LostMouseCapture="NightLightSlider_Release"
-                                            KeyUp="NightLightSlider_Release" LostKeyboardFocus="NightLightSlider_Release" />
+                                            KeyUp="NightLightSlider_KeyUp" LostKeyboardFocus="NightLightSlider_Release" />
                                     <TextBlock Grid.Column="3" Text="{Binding NightLightStrength}" HorizontalAlignment="Right" VerticalAlignment="Center"
                                                FontWeight="SemiBold" Foreground="{DynamicResource TextFillColorPrimaryBrush}" />
                                 </Grid>
